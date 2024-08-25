@@ -3,3 +3,6 @@
 
 抓包下载地址
 https://github.com/wanghongenpin/network_proxy_flutter
+
+安装证书不成功可尝试其他模块
+如: https://github.com/ys1231/MoveCertificate

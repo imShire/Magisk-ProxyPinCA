@@ -65,6 +65,27 @@ if [ -d /apex/com.android.conscrypt/cacerts ]; then
     rmdir "$TEMP_DIR"
 else
     echo "[$(date +%F) $(date +%T)] - Android version lower than 14 detected"
-    set_context /system/etc/security/cacerts ${MODDIR}/system/etc/security/cacerts 
+    TEMP_DIR="/data/local/tmp/cacerts-copy"
+    SYSTEM_CACERTS_DIR="/system/etc/security/cacerts"
+    IMPORT_CA_DIR=${MODDIR}/system/etc/security/cacerts
+
+    rm -rf "$TEMP_DIR"
+    mkdir -p -m 700 $TEMP_DIR
+    # 复制系统证书到临时目录
+    cp $SYSTEM_CACERTS_DIR/* $TEMP_DIR
+    # 复制 ProxyPin 证书到临时目录
+    cp $IMPORT_CA_DIR/* $TEMP_DIR/
+    set_context $SYSTEM_CACERTS_DIR "$TEMP_DIR"
+    # 将 /system/etc/security/cacerts 挂载到 tmpfs
+    mount -t tmpfs tmpfs $SYSTEM_CACERTS_DIR
+    chown -R 0:0 $TEMP_DIR
+    chmod -R 644 $TEMP_DIR
+    # 将临时目录中的证书移动到 系统证书目录
+    mv $TEMP_DIR/* $SYSTEM_CACERTS_DIR/
     echo "[$(date +%F) $(date +%T)] - Mount success!"
+fi
+
+if [ $(id -u) -ne 0 ]; then
+    echo "This script must be run as root" 1>&2
+    exit 1
 fi
